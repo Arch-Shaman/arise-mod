@@ -55,7 +55,7 @@ local function UpdateUnitStats(unitID, level)
 				local newDamages = {}
 				for k, v in pairs(damages) do
 					if k:lower() ~= "paralyzedamagetime" then -- DO NOT CHANGE PARALYSIS TIME! At least until we understand it better.
-						if type(k) ~= table then
+						if type(k) ~= "table" then
 							newDamages[k] = v * upgradeAmount
 						else
 							newDamages[k] = {}
