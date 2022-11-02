@@ -15,20 +15,40 @@ function gadget:GetInfo()
 end
 
 -- configuration --
-local costFactor = 2
-local payForNewFactories = false
-local upgradeFactor = 0.1
+local costFactor         = 2       -- how much more expensive factories are per level, in terms of initial cost.
+local maxlevel           = 10      -- maximum level that can be obtained.
+local payForNewFactories = false   -- set to true to make cons pay for new factory.
+local upgradeFactor      = 0.1     -- percentage boost.
+local upgradeTimeMax     = 60      -- in seconds
 
+-- Includes --
+local IterableMap = VFS.Include("LuaRules/Gadgets/Include/IterableMap.lua")
 
 -- Speedups --
 local INLOS = {inlos = true}
 
-local function GetNewCost(unitDefID, level)
+local morphCmdDesc = {
+	id	   = 323232,
+	type   = CMDTYPE.ICON,
+	name   = 'Morph',
+	action = 'morph',
+}
+
+local function GetCost(unitDefID, level)
 	return UnitDefs[unitDefID].metalCost * (1 + (costFactor * (level - 1))) -- cost Table: 1 / 3 / 5 / 7 / 9 . .
 end
 
+local function GetUnitLevel(unitID)
+	return Spring.GetUnitRulesParam(unitID, "unitlevel")
+end
+
+local function GetMorphRate(unitDefID, level)
+	local actualCost = GetCost(unitDefID, level + 1) - GetCost(unitDefID, level)
+	return math.min(actualCost / 10, upgradeTimeMax)
+end
+
 local function UpdateUnitCost(unitID, unitDefID, level)
-	local newCost = GetNewCost(unitDefID, level)
+	local newCost = GetCost(unitDefID, level)
 	Spring.SetUnitCosts(unitID, newCost, newCost, newCost)
 end
 
@@ -81,6 +101,27 @@ local function UpdateUnitStats(unitID, level)
 	end
 end
 
+local function AddMorphDesc(unitID)
+	
+end
+
+local function ProcessMorph(unitID)
+	
+end
+
+local function UpdateMorphDesc(unitID)
+	local level = GetUnitLevel(unitID)
+	if level == maxlevel then
+		-- remove morph command.
+	end
+end
+
+local function OnMorphComplete(unitID)
+	local level = GetUnitLevel(unitID)
+	UpdateUnitStats(unitID, level + 1)
+	UpdateMorphDesc(unitID)
+end
+
 function gadget:UnitCreated(unitID, unitDefID, unitTeam, builderID)
 	if builderID then
 		local level = Spring.GetUnitRulesParam(builderID, "unitlevel") or 1
@@ -90,5 +131,19 @@ function gadget:UnitCreated(unitID, unitDefID, unitTeam, builderID)
 		end
 		UpdateUnitStats(unitID, level)
 	end
+	if UnitDefs[unitDefID].isFactory then
+		AddMorphDesc(unitID)
+	end
 end
 
+function gadget:UnitDestroyed(unitID)
+	
+end
+
+function gadget:UnitReverseBuilt(unitID)
+	gadget:UnitDestroyed(unitID)
+end
+
+function gadget:GameFrame(f)
+	
+end
