@@ -5,6 +5,7 @@ local rules = {
 	maxLevel           = 10,      -- maximum level that can be obtained.
 	upgradeTimeMax     = 60,      -- in seconds
 	upgradeFactor      = 0.1,     -- percentage boost.
+	upgradeBuildPower  = 20,      -- buildpower of the morph
 	payForNewFactories = false,   -- set to true to make cons pay for new factory.
 }
 
