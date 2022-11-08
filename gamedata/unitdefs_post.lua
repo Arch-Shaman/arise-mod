@@ -1038,9 +1038,10 @@ do
 		end
 		if level < rules.maxLevel then
 			local nextMorphCost = def.buildcostmetal * (rules.costFactor * level)
-			UnitDefs[name].customparams.morphto = name .. "_" .. level + 1
-			UnitDefs[name].customparams.morphtime = math.min(nextMorphCost/rules.upgradeBuildPower, rules.upgradeTimeMax)
+			newDef.customparams.morphto = name .. "_" .. level + 1
+			newDef.customparams.morphtime = math.min(nextMorphCost/rules.upgradeBuildPower, rules.upgradeTimeMax)
 		end
+		newDef.customparams.upgradedfactory = '1'
 	end
 	
 	for _, name in pairs(allFactories) do
