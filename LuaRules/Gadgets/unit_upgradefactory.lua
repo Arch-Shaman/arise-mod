@@ -15,36 +15,23 @@ function gadget:GetInfo()
 end
 
 -- configuration --
-local costFactor         = 2       -- how much more expensive factories are per level, in terms of initial cost.
-local maxlevel           = 10      -- maximum level that can be obtained.
-local payForNewFactories = false   -- set to true to make cons pay for new factory.
-local upgradeFactor      = 0.1     -- percentage boost.
-local upgradeTimeMax     = 60      -- in seconds
-
--- Includes --
-local IterableMap = VFS.Include("LuaRules/Gadgets/Include/IterableMap.lua")
+local rules = VFS.Include("gamedata/arise_rules.lua", nil, VFS.GAME)
+local FACTORY_RANGE = VFS.Include("gamedata/unitdefs_pre.lua", nil, VFS.GAME).FACTORY_PLATE_RANGE
 
 -- Speedups --
 local INLOS = {inlos = true}
 
-local morphCmdDesc = {
-	id	   = 323232,
-	type   = CMDTYPE.ICON,
-	name   = 'Morph',
-	action = 'morph',
-}
+-- variables --
+local watchUnitIDs = {} -- holds list of factories, since units can build factories. 
+
+-- toolbox --
 
 local function GetCost(unitDefID, level)
-	return UnitDefs[unitDefID].metalCost * (1 + (costFactor * (level - 1))) -- cost Table: 1 / 3 / 5 / 7 / 9 . .
+	return UnitDefs[unitDefID].metalCost * (1 + (rules.costFactor * (level - 1))) -- cost Table: 1 / 3 / 5 / 7 / 9 . .
 end
 
 local function GetUnitLevel(unitID)
 	return Spring.GetUnitRulesParam(unitID, "unitlevel")
-end
-
-local function GetMorphRate(unitDefID, level)
-	local actualCost = GetCost(unitDefID, level + 1) - GetCost(unitDefID, level)
-	return math.min(actualCost / 10, upgradeTimeMax)
 end
 
 local function UpdateUnitCost(unitID, unitDefID, level)
@@ -63,7 +50,7 @@ local function UpdateUnitStats(unitID, level)
 	if level > 1 then
 		local unitDefID = Spring.GetUnitDefID(unitID)
 		local health, maxhealth = Spring.GetUnitHealth(unitID)
-		local upgradeAmount = 1 + ((level - 1) * upgradeFactor)
+		local upgradeAmount = 1 + ((level - 1) * rules.upgradeFactor)
 		Spring.SetUnitMaxHealth(unitID, maxhealth * upgradeAmount)
 		
 		-- update weapon stats --
@@ -101,32 +88,22 @@ local function UpdateUnitStats(unitID, level)
 	end
 end
 
-local function AddMorphDesc(unitID)
+local function UpgradePlatesInRegion(unitID, factoryBaseDef, newLevel, factoryID)
+	local allyTeam = Spring.GetUnitAllyTeam(factoryID)
 	
 end
 
-local function ProcessMorph(unitID)
-	
-end
+-- Callins --
 
-local function UpdateMorphDesc(unitID)
-	local level = GetUnitLevel(unitID)
-	if level == maxlevel then
-		-- remove morph command.
-	end
-end
+function gadget:UnitFinished(unitID, unitDefID, unitTeam)
 
-local function OnMorphComplete(unitID)
-	local level = GetUnitLevel(unitID)
-	UpdateUnitStats(unitID, level + 1)
-	UpdateMorphDesc(unitID)
 end
 
 function gadget:UnitCreated(unitID, unitDefID, unitTeam, builderID)
 	if builderID then
 		local level = Spring.GetUnitRulesParam(builderID, "unitlevel") or 1
 		Spring.SetUnitRulesParam(unitID, "unitlevel", level, INLOS)
-		if payForNewFactories and UnitDefs[unitDefID].isFactory then
+		if rules.payForNewFactories and UnitDefs[unitDefID].isFactory then
 			UpdateUnitCost(unitID, unitDefID, level)
 		end
 		UpdateUnitStats(unitID, level)
@@ -134,16 +111,4 @@ function gadget:UnitCreated(unitID, unitDefID, unitTeam, builderID)
 	if UnitDefs[unitDefID].isFactory then
 		AddMorphDesc(unitID)
 	end
-end
-
-function gadget:UnitDestroyed(unitID)
-	
-end
-
-function gadget:UnitReverseBuilt(unitID)
-	gadget:UnitDestroyed(unitID)
-end
-
-function gadget:GameFrame(f)
-	
 end
